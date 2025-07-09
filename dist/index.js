@@ -164,7 +164,6 @@ async function compileProtobuf(options) {
         console.log('编译完成!');
     }
 }
-// 向后兼容的主函数
 async function main() {
     (0, strict_1.default)(process.env.PROTOCOL_PATH, "请设置环境变量 PROTOCOL_PATH 配置文件路径");
     (0, strict_1.default)(process.env.PROTOCOL_SCRIPT, "请设置环境变量 PROTOCOL_SCRIPT 配置文件路径");
