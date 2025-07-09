@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message PlayerInfo {
+    string name = 1;
+    int32 level = 2;
+    repeated string items = 3;
+}
+
+message GameSession {
+    string session_id = 1;
+    PlayerInfo player = 2;
+    int64 timestamp = 3;
+}
