@@ -2,9 +2,8 @@ import assert from 'assert/strict';
 import { execSync } from "child_process";
 import * as crc32 from 'crc-32';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from "fs";
-import { join, resolve } from "path";
+import { join, parse, resolve } from "path";
 import { GetAccessorDeclarationStructure, Project, Scope, StructureKind, SyntaxKind } from "ts-morph";
-import { parse } from 'path';
 
 export interface CompilerOptions {
     input: string;
@@ -32,7 +31,7 @@ function removeFilesInDirectory(dirPath: string): void {
 
 export async function compileProtobuf(options: CompilerOptions): Promise<void> {
     const { input, output, verbose = false } = options;
-    
+
     if (verbose) {
         console.log('开始编译protobuf文件...');
     }
@@ -49,7 +48,7 @@ export async function compileProtobuf(options: CompilerOptions): Promise<void> {
     }
 
     const command = `npx protoc --ts_out ${protobufOutTemp} --proto_path ${input} ${input}/*.proto --experimental_allow_proto3_optional`;
-    
+
     if (verbose) {
         console.log("执行命令：", command);
     }
@@ -94,6 +93,9 @@ export async function compileProtobuf(options: CompilerOptions): Promise<void> {
                     moduleSpecifier: "@gf-core/core/container",
                 },
             ]);
+
+            const protoNames: Array<string> = [];
+
             const w = project.createWriter();
             w.newLine();
             w.write(`const serializable = Container.getInterface("IGameFramework.ISerializable");`);
@@ -128,6 +130,8 @@ export async function compileProtobuf(options: CompilerOptions): Promise<void> {
 
                             w.write(`   serializable!.registerInst(${name});`);
                             w.newLine();
+
+                            protoNames.push(name);
                         }
                     }
                 });
@@ -135,8 +139,12 @@ export async function compileProtobuf(options: CompilerOptions): Promise<void> {
 
             w.write(`} else {`);
             w.newLine();
-            w.write(`   console.error("未找到 IGameFramework.ISerializable 接口");`);
-            w.newLine();
+
+            protoNames.forEach(name => {
+                w.write(`   Container!.addProtoType(${name});`);
+                w.newLine();
+            });
+
             w.write(`}`);
             sourceFile.insertText(sourceFile.getEnd(), w.toString());
             sourceFile.formatText();
@@ -147,7 +155,7 @@ export async function compileProtobuf(options: CompilerOptions): Promise<void> {
 
     source.saveSync();
     rmSync(protobufOutTemp, { recursive: true });
-    
+
     if (verbose) {
         console.log('编译完成!');
     }

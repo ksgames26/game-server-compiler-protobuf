@@ -185,5 +185,6 @@ if (serializable) {
     serializable!.registerInst(PlayerInfo);
     serializable!.registerInst(GameSession);
 } else {
-    console.error("未找到 IGameFramework.ISerializable 接口");
+    Container!.addProtoType(PlayerInfo);
+    Container!.addProtoType(GameSession);
 }

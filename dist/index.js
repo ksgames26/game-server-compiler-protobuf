@@ -44,7 +44,6 @@ const crc32 = __importStar(require("crc-32"));
 const fs_1 = require("fs");
 const path_1 = require("path");
 const ts_morph_1 = require("ts-morph");
-const path_2 = require("path");
 function removeFilesInDirectory(dirPath) {
     try {
         const items = (0, fs_1.readdirSync)(dirPath);
@@ -100,7 +99,7 @@ async function compileProtobuf(options) {
             source.addImportDeclarations([
                 {
                     isTypeOnly: false,
-                    moduleSpecifier: `./${(0, path_2.parse)(file).name}`,
+                    moduleSpecifier: `./${(0, path_1.parse)(file).name}`,
                 },
             ]);
             const project = new ts_morph_1.Project();
@@ -113,6 +112,7 @@ async function compileProtobuf(options) {
                     moduleSpecifier: "@gf-core/core/container",
                 },
             ]);
+            const protoNames = [];
             const w = project.createWriter();
             w.newLine();
             w.write(`const serializable = Container.getInterface("IGameFramework.ISerializable");`);
@@ -144,14 +144,17 @@ async function compileProtobuf(options) {
                             classDeclaration.addGetAccessor(getterStructure);
                             w.write(`   serializable!.registerInst(${name});`);
                             w.newLine();
+                            protoNames.push(name);
                         }
                     }
                 });
             });
             w.write(`} else {`);
             w.newLine();
-            w.write(`   console.error("未找到 IGameFramework.ISerializable 接口");`);
-            w.newLine();
+            protoNames.forEach(name => {
+                w.write(`   Container!.addProtoType(${name});`);
+                w.newLine();
+            });
             w.write(`}`);
             sourceFile.insertText(sourceFile.getEnd(), w.toString());
             sourceFile.formatText();
